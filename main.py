@@ -18,34 +18,23 @@ DB_NAME = os.getenv("DB_NAME", "tb-edge")
 DB_USER = os.getenv("DB_USER", "postgres")
 
 # AWS S3 Configuration from environment variables
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+# AWS credentials will be automatically picked up from:
+# - AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
+# - AWS credentials file (~/.aws/credentials)
+# - IAM roles (if running on EC2/ECS/Lambda)
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 S3_FOLDER = os.getenv("S3_FOLDER")
 
 # Validate required environment variables
-required_vars = {
-    "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
-    "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
-    "S3_BUCKET_NAME": S3_BUCKET_NAME
-}
-missing_vars = [key for key, value in required_vars.items() if not value]
-
-if missing_vars:
-    print(f"ERROR: Missing required environment variables: {', '.join(missing_vars)}")
+if not S3_BUCKET_NAME:
+    print("ERROR: Missing required environment variable: S3_BUCKET_NAME")
     exit(1)
 
 print(f"Database: {DB_NAME} (container: {CONTAINER_NAME})")
 print(f"S3 Bucket: {S3_BUCKET_NAME}")
 print(f"S3 Backup Folder: {S3_FOLDER}")
-
-print(f"AWS Credentials: {AWS_ACCESS_KEY_ID} {AWS_SECRET_ACCESS_KEY}")
 print(f"AWS Region: {AWS_REGION}")
-print(f"S3 Bucket: {S3_BUCKET_NAME}")
-print(f"S3 Folder: {S3_FOLDER}")
-print(f"Database: {DB_NAME} (container: {CONTAINER_NAME})")
-print(f"Database User: {DB_USER}")
 
 # ==================================================
 
@@ -71,16 +60,15 @@ def remove_old_archives():
         shutil.rmtree(backup_dir)
 
 def upload_to_s3(file_path, s3_key):
-    """Upload file to S3 bucket"""
+    """Upload file to S3 bucket using default AWS credential chain"""
     try:
         print(f"Uploading {file_path} to s3://{S3_BUCKET_NAME}/{s3_key}")
         
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            region_name=AWS_REGION
-        )
+        # boto3 will automatically use credentials from:
+        # - Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        # - AWS credentials file (~/.aws/credentials)
+        # - IAM roles (if running on EC2/ECS/Lambda)
+        s3_client = boto3.client('s3', region_name=AWS_REGION)
         
         # Upload file with progress callback
         s3_client.upload_file(
