@@ -39,6 +39,14 @@ if missing_vars:
 print(f"Database: {DB_NAME} (container: {CONTAINER_NAME})")
 print(f"S3 Bucket: {S3_BUCKET_NAME}")
 print(f"S3 Backup Folder: {S3_FOLDER}")
+
+print(f"AWS Credentials: {AWS_ACCESS_KEY_ID} {AWS_SECRET_ACCESS_KEY}")
+print(f"AWS Region: {AWS_REGION}")
+print(f"S3 Bucket: {S3_BUCKET_NAME}")
+print(f"S3 Folder: {S3_FOLDER}")
+print(f"Database: {DB_NAME} (container: {CONTAINER_NAME})")
+print(f"Database User: {DB_USER}")
+
 # ==================================================
 
 # Backup in the same folder as script
