@@ -2,7 +2,6 @@
 
 import subprocess
 import os
-import json
 import shutil
 from datetime import datetime
 from dotenv import load_dotenv
@@ -12,29 +11,32 @@ from botocore.exceptions import ClientError
 # Load environment variables from .env file
 load_dotenv()
 
-metadata = {}
-with open("data.json", "r") as f:
-    content = json.load(f)
-    metadata = content
-
-
 # ===================== CONFIG =====================
-CONTAINER_NAME = "tb-edge-db"   # Docker container running Postgres
-DB_NAME = "tb-edge"
-DB_USER = "postgres" 
+# Database Configuration from environment variables
+CONTAINER_NAME = os.getenv("CONTAINER_NAME", "tb-edge-db")
+DB_NAME = os.getenv("DB_NAME", "tb-edge")
+DB_USER = os.getenv("DB_USER", "postgres")
 
 # AWS S3 Configuration from environment variables
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
-S3_FOLDER = os.getenv("S3_FOLDER") or metadata.get("backup_folder")
+S3_FOLDER = os.getenv("S3_FOLDER")
 
 # Validate required environment variables
-if not all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET_NAME]):
-    print("ERROR: Missing required environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET_NAME)")
+required_vars = {
+    "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
+    "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
+    "S3_BUCKET_NAME": S3_BUCKET_NAME
+}
+missing_vars = [key for key, value in required_vars.items() if not value]
+
+if missing_vars:
+    print(f"ERROR: Missing required environment variables: {', '.join(missing_vars)}")
     exit(1)
 
+print(f"Database: {DB_NAME} (container: {CONTAINER_NAME})")
 print(f"S3 Bucket: {S3_BUCKET_NAME}")
 print(f"S3 Backup Folder: {S3_FOLDER}")
 # ==================================================
